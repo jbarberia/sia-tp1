@@ -1,2 +1,4 @@
 # sia-tp1
-Metodos de Busqueda
+
+
+Los tableros del sokoban se pueden descargar de [game-sokoban](http://www.game-sokoban.com/).
