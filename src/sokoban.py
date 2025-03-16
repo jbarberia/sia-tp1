@@ -131,12 +131,45 @@ class Sokoban:
         Returns:
             list: funciones de movimiento del jugador
         """
-        return [
-            self.move_up,
-            self.move_down,
-            self.move_right,
-            self.move_left,
-        ]
+
+        if not self.movements:
+            return [
+                self.move_up,
+                self.move_down,
+                self.move_right,
+                self.move_left,
+            ]
+
+        # esto es para evitar que el jugador vaya hacia arriba y hacia abajo
+        # infinitamente. Con solo retornar toda la lista de movimientos 
+        # funcionaria bien en el BFS pero no en el DFS.
+        if self.movements[-1] == "u":
+            return [
+                self.move_up,
+                self.move_right,
+                self.move_left,
+            ]
+        elif self.movements[-1] == "d":
+            return [
+                self.move_down,
+                self.move_right,
+                self.move_left,
+            ]
+        elif self.movements[-1] == "r":
+            return [
+                self.move_up,
+                self.move_down,
+                self.move_right,
+            ]
+        elif self.movements[-1] == "l":
+            return [
+                self.move_up,
+                self.move_down,
+                self.move_left,
+            ]
+
+
+
 
     def is_finished(self) -> bool:
         """Verifica si el juego ha sido completado exitosamente.
