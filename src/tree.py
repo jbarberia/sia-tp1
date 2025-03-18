@@ -10,8 +10,8 @@ def bfs(root):
     Returns:
         Sokoban: estado final del juego.
     """
-    queue = []
-    queue.append(root)
+    root.movements = ""
+    queue = [root]
     while queue:
         current = queue.pop(0)
         if current.is_finished():
@@ -39,8 +39,8 @@ def dfs(root):
     Returns:
         Sokoban: estado final del juego.
     """
-    queue = []
-    queue.append(root)
+    root.movements = ""
+    queue = [root]
     while queue:
         current = queue.pop()  # En DFS se toma el primer elemento que entro
         if current.is_finished():
