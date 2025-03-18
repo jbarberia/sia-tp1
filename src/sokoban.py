@@ -13,6 +13,7 @@ class Sokoban:
     WALL = "#"
     EMPTY = " "
     GOAL = "."
+    GOAL_AND_BOX = "*"
 
     def __init__(self):
         """Inicializa datos de la clase"""
@@ -39,14 +40,20 @@ class Sokoban:
             for j, cell in enumerate(row):
                 if cell == self.WALL:
                     self.grid[i, j] = self.WALL
-                elif cell == self.BOX:
+                elif cell in self.BOX:
                     self.grid[i, j] = self.BOX
                     self.boxes.append((i, j))
                 elif cell == self.GOAL:
                     self.goals.append((i, j))
+                elif cell == self.GOAL_AND_BOX:
+                    self.grid[i, j] = self.BOX
+                    self.boxes.append((i, j))
+                    self.goals.append((i, j))
                 elif cell == self.PLAYER:
                     self.grid[i, j] = self.PLAYER
                     self.player = (i, j)
+
+                
 
     def _move(self, x: int, y: int):
         """Mueve el jugador en la dirección indicada.

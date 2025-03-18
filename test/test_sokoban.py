@@ -99,3 +99,19 @@ def test_is_deadlocked():
       assert not s.is_deadlocked()
    s = s.move_right()
    assert s.is_deadlocked()
+
+
+grid_with_box_in_goal="""
+########
+#      #
+# .**$@#
+#      #
+#####  #
+    ####
+"""
+def test_box_started_in_goal():
+   s = Sokoban()
+   s.parse_grid(grid_with_box_in_goal)
+   assert len(s.boxes) == 3
+   assert len(s.goals) == 3
+   
