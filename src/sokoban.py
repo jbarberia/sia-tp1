@@ -139,41 +139,50 @@ class Sokoban:
             list: funciones de movimiento del jugador
         """
 
-        if not self.movements:
-            return [
-                self.move_up,
-                self.move_down,
-                self.move_right,
-                self.move_left,
-            ]
+        movements = {
+            "u": self.move_up,
+            "d": self.move_down,
+            "r": self.move_right,
+            "l": self.move_left,
+        }
 
         # esto es para evitar que el jugador vaya hacia arriba y hacia abajo
         # infinitamente. Con solo retornar toda la lista de movimientos 
         # funcionaria bien en el BFS pero no en el DFS.
-        if self.movements[-1] == "u":
-            return [
-                self.move_up,
-                self.move_right,
-                self.move_left,
+        opposite_movement = {
+            "u": "d",
+            "d": "u",
+            "l": "r",
+            "r": "l",            
+        }
+        if self.movements:
+            del movements[opposite_movement[self.movements[-1]]]
+
+        # Verifica que el proximo movimiento no sea una pared
+        i, j = self.player
+
+        movimientos = {
+            (-1,  0): "u",
+            ( 1,  0): "d",
+            ( 0, -1): "l",
+            ( 1,  1): "r",
+        }
+
+        for (x, y), movement in movimientos.items():
+            invalid_moves = [
+                self.grid[i + x, j + y] == self.WALL,
+                self.grid[i + x, j + y] == self.BOX
+                and self.grid[i + 2 * x, j + 2 * y] == self.WALL,
+                self.grid[i + x, j + y] == self.BOX
+                and self.grid[i + 2 * x, j + 2 * y] == self.BOX,
             ]
-        elif self.movements[-1] == "d":
-            return [
-                self.move_down,
-                self.move_right,
-                self.move_left,
-            ]
-        elif self.movements[-1] == "r":
-            return [
-                self.move_up,
-                self.move_down,
-                self.move_right,
-            ]
-        elif self.movements[-1] == "l":
-            return [
-                self.move_up,
-                self.move_down,
-                self.move_left,
-            ]
+            if any(invalid_moves) and movements.get(movement, False):
+                del movements[movement]
+
+        
+        return list(movements.values())
+
+
 
 
 

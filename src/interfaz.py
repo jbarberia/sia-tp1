@@ -31,14 +31,14 @@ TAM_BLOQUE = 40
 
 # Escenario en formato del archivo original
 basic_grid = """
-
 ########
 #      #
-#  .*$@#
+# .**$@#
 #      #
 #####  #
     ####
 """
+# http://www.game-sokoban.com/index.php?mode=level&lid=928
 
 # Crear objeto Sokoban y cargar el nivel
 juego = Sokoban()
