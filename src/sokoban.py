@@ -138,53 +138,12 @@ class Sokoban:
         Returns:
             list: funciones de movimiento del jugador
         """
-
-        movements = {
-            "u": self.move_up,
-            "d": self.move_down,
-            "r": self.move_right,
-            "l": self.move_left,
-        }
-
-        # esto es para evitar que el jugador vaya hacia arriba y hacia abajo
-        # infinitamente. Con solo retornar toda la lista de movimientos 
-        # funcionaria bien en el BFS pero no en el DFS.
-        opposite_movement = {
-            "u": "d",
-            "d": "u",
-            "l": "r",
-            "r": "l",            
-        }
-        if self.movements:
-            del movements[opposite_movement[self.movements[-1]]]
-
-        # Verifica que el proximo movimiento no sea una pared
-        i, j = self.player
-
-        movimientos = {
-            (-1,  0): "u",
-            ( 1,  0): "d",
-            ( 0, -1): "l",
-            ( 1,  1): "r",
-        }
-
-        for (x, y), movement in movimientos.items():
-            invalid_moves = [
-                self.grid[i + x, j + y] == self.WALL,
-                self.grid[i + x, j + y] == self.BOX
-                and self.grid[i + 2 * x, j + 2 * y] == self.WALL,
-                self.grid[i + x, j + y] == self.BOX
-                and self.grid[i + 2 * x, j + 2 * y] == self.BOX,
-            ]
-            if any(invalid_moves) and movements.get(movement, False):
-                del movements[movement]
-
-        
-        return list(movements.values())
-
-
-
-
+        return [
+            self.move_down,
+            self.move_up,
+            self.move_right,
+            self.move_left,
+        ]
 
 
     def is_finished(self) -> bool:
@@ -195,6 +154,7 @@ class Sokoban:
         """
         return all([box in self.goals for box in self.boxes])
 
+
     def is_deadlocked(self) -> bool:
         """Verifica que el juego no se encuentre en un estado sin solución.
         Esto significa que la caja se queda en una esquina y no puede ser movida.
@@ -202,15 +162,85 @@ class Sokoban:
         Returns:
             bool: indicador de si el juego está en un estado sin solución
         """
+
+
+        in_corner = any([self._is_in_corner(i, j) for i, j in self.boxes if (i,j) not in self.goals])
+        if in_corner: return True
+            
+        # Caso donde los unicos movimientos llevan a un deadlock
+        ########
+        # #
+        # #@
+        # #
+        ########
         for i, j in self.boxes:
-            if (i,j,) in self.goals: # Evita deadlock si la caja está en un goal
-                continue
-            if self.grid[i - 1, j] == self.WALL and self.grid[i, j - 1] == self.WALL:
+            strings = self._get_possible_movements(i, j)
+            next_box_move_is_deadlock = []
+            for x, y in map(self._get_coord_from_str, strings):                            
+                space_to_push = self.grid[i-x, j-y] == self.EMPTY
+                if space_to_push:
+                    next_box_move_is_deadlock.append(self._is_in_corner(i+x, j+y))            
+            if all(next_box_move_is_deadlock):
                 return True
-            if self.grid[i - 1, j] == self.WALL and self.grid[i, j + 1] == self.WALL:
-                return True
-            if self.grid[i + 1, j] == self.WALL and self.grid[i, j - 1] == self.WALL:
-                return True
-            if self.grid[i + 1, j] == self.WALL and self.grid[i, j + 1] == self.WALL:
-                return True
+
+        
         return False
+
+
+    def _is_in_corner(self, i:int, j:int):
+        """dada una posicion, indica si se encuentra en una esquina del tablero
+
+        Args:
+            i (int): posicion horizontal
+            j (int): posicion vertical
+
+        Returns:
+            bool: indicacione si esta en el tablero
+        """
+        if self.grid[i - 1, j] == self.WALL and self.grid[i, j - 1] == self.WALL:
+            return True
+        if self.grid[i - 1, j] == self.WALL and self.grid[i, j + 1] == self.WALL:
+            return True
+        if self.grid[i + 1, j] == self.WALL and self.grid[i, j - 1] == self.WALL:
+            return True
+        if self.grid[i + 1, j] == self.WALL and self.grid[i, j + 1] == self.WALL:
+            return True
+        return False
+    
+
+    def _get_possible_movements(self, i:int, j:int):
+        """devuelve un listado de posibles movimientos a realizar
+
+        Args:
+            i (int): posicion horizontal
+            j (int): posicion vertical
+        """
+        
+        movimientos = {
+            (-1,  0): "u",
+            ( 1,  0): "d",
+            ( 0, -1): "l",
+            ( 1,  1): "r",
+        }
+
+        valid_movements = []
+        for (x, y), movement in movimientos.items():
+            invalid_moves = [
+                self.grid[i + x, j + y] == self.WALL,
+                self.grid[i + x, j + y] == self.BOX and self.grid[i + 2 * x, j + 2 * y] == self.WALL,
+                self.grid[i + x, j + y] == self.BOX and self.grid[i + 2 * x, j + 2 * y] == self.BOX,
+            ]
+            if not any(invalid_moves):
+                valid_movements.append(movement)
+
+        return valid_movements                
+
+
+    def _get_coord_from_str(self, string):
+        movimientos = {
+            "u": (-1,  0),
+            "d": ( 1,  0),
+            "l": ( 0, -1),
+            "r": ( 1,  1),
+        }
+        return movimientos[string]
