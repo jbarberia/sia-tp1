@@ -163,8 +163,9 @@ class Sokoban:
             bool: indicador de si el juego está en un estado sin solución
         """
 
+        if self.is_finished(): return False
 
-        in_corner = any([self._is_in_corner(i, j) for i, j in self.boxes if (i,j) not in self.goals])
+        in_corner = any([self._is_in_corner(i, j) for i, j in self.boxes if not (i,j) in self.goals])
         if in_corner: return True
             
         # Caso donde los unicos movimientos llevan a un deadlock
