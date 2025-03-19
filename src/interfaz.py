@@ -16,7 +16,7 @@ fuente_grande = pygame.font.SysFont("Arial", 32)
 
 # Colores
 COLOR_FONDO = (30, 30, 30)
-COLOR_CAJA = (160, 82, 45)
+COLOR_CAJA = (170, 82, 45)
 COLOR_OBJETIVO = (200, 180, 0)
 COLOR_JUGADOR = (0, 100, 255)
 COLOR_PARED = (80, 80, 80)
@@ -32,11 +32,11 @@ TAM_BLOQUE = 40
 # Escenario en formato del archivo original
 basic_grid = """
 ########
+#  .   #
 #      #
-# .**$@#
-#      #
-#####  #
-    ####
+# $    #
+#   @  #
+########
 """
 # http://www.game-sokoban.com/index.php?mode=level&lid=928
 

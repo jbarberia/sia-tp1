@@ -13,7 +13,7 @@ class Sokoban:
     WALL = "#"
     EMPTY = " "
     GOAL = "."
-    GOAL_AND_BOX = "*"
+    GOAL_AND_BOX = "*"   
 
     def __init__(self):
         """Inicializa datos de la clase"""
@@ -24,7 +24,7 @@ class Sokoban:
         self.movements = ""
 
     def parse_grid(self, grid: str) -> np.ndarray:
-        """Transforma el tableto de juego en un array de numpy
+        """Transforma el tablero de juego en un array de numpy
 
         Args:
             grid (str): tablero en formato ASCII de acuerdo a http://www.game-sokoban.com/
