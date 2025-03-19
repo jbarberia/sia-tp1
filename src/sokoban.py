@@ -14,6 +14,7 @@ class Sokoban:
     EMPTY = " "
     GOAL = "."
     GOAL_AND_BOX = "*"
+    GOAL_AND_PLAYER = "+"
 
     def __init__(self):
         """Inicializa datos de la clase"""
@@ -24,7 +25,7 @@ class Sokoban:
         self.movements = ""
 
     def parse_grid(self, grid: str) -> np.ndarray:
-        """Transforma el tableto de juego en un array de numpy
+        """Transforma el tablero de juego en un array de numpy
 
         Args:
             grid (str): tablero en formato ASCII de acuerdo a http://www.game-sokoban.com/
@@ -51,6 +52,11 @@ class Sokoban:
                     self.goals.append((i, j))
                 elif cell == self.PLAYER:
                     self.grid[i, j] = self.PLAYER
+                    self.player = (i, j)
+                    gridlines = grid.split("\n")
+                elif cell == self.GOAL_AND_PLAYER:
+                    self.grid[i, j] = self.GOAL
+                    self.goals.append((i, j))
                     self.player = (i, j)
 
                 
@@ -165,26 +171,16 @@ class Sokoban:
 
         if self.is_finished(): return False
 
-        in_corner = any([self._is_in_corner(i, j) for i, j in self.boxes if not (i,j) in self.goals])
-        if in_corner: return True
-            
-        # Caso donde los unicos movimientos llevan a un deadlock
-        ########
-        # #
-        # #@
-        # #
-        ########
-        for i, j in self.boxes:
-            strings = self._get_possible_movements(i, j)
-            next_box_move_is_deadlock = []
-            for x, y in map(self._get_coord_from_str, strings):                            
-                space_to_push = self.grid[i-x, j-y] == self.EMPTY
-                if space_to_push:
-                    next_box_move_is_deadlock.append(self._is_in_corner(i+x, j+y))            
-            if all(next_box_move_is_deadlock):
+        for box in self.boxes:
+            # Es un deadlock si una caja llega a una esquina, se excluye cajas en esquinas que son GOAL
+            if self._is_in_corner(*box) and box not in self.goals:
                 return True
-
+            
+            # Es un deadlock si una caja queda sobre una pared y solo puede moverse sobre ella
+            if self._is_wall_deadlock(*box):
+                return True
         
+        # Si llegamos aca no hay deadlock
         return False
 
 
@@ -209,39 +205,56 @@ class Sokoban:
         return False
     
 
-    def _get_possible_movements(self, i:int, j:int):
-        """devuelve un listado de posibles movimientos a realizar
+    def _is_wall_deadlock(self, i:int, j:int):
+        """Verifica que la caja esta en una posicion donde es imposible llevarla
+        hacia un goal. Por ejemplo debajos se ve que la caja ($) es imposible
+        llevarla al goal (.)
+
+        #########
+        #    $  #
+        #  .    #
 
         Args:
-            i (int): posicion horizontal
-            j (int): posicion vertical
+            i (int): posicion horizontal de la caja
+            j (int): posicion vertical de la caja
         """
-        
-        movimientos = {
-            (-1,  0): "u",
-            ( 1,  0): "d",
-            ( 0, -1): "l",
-            ( 1,  1): "r",
-        }
+        grid = self.grid
 
-        valid_movements = []
-        for (x, y), movement in movimientos.items():
-            invalid_moves = [
-                self.grid[i + x, j + y] == self.WALL,
-                self.grid[i + x, j + y] == self.BOX and self.grid[i + 2 * x, j + 2 * y] == self.WALL,
-                self.grid[i + x, j + y] == self.BOX and self.grid[i + 2 * x, j + 2 * y] == self.BOX,
-            ]
-            if not any(invalid_moves):
-                valid_movements.append(movement)
+        # Horizontal
+        l_offset = 0
+        r_offset = 0
+        while True:
+            move_r_offset = 1 if grid[i, j + r_offset] != self.WALL else 0
+            move_l_offset = 1 if grid[i, j - l_offset] != self.WALL else 0
+            r_offset += move_r_offset
+            l_offset += move_l_offset
+            if move_l_offset == 0 and move_r_offset == 0:
+                break
 
-        return valid_movements                
+        all_wall_up   = all(grid[i-1, j-l_offset+1:j+r_offset] == self.WALL)
+        all_wall_down = all(grid[i+1, j-l_offset+1:j+r_offset] == self.WALL)
+        goal_in_row = any([(g[0] == i) and (j-l_offset+1 <= g[1] <= j+r_offset) for g in self.goals])
 
+        if (not goal_in_row and all_wall_down) or (not goal_in_row and all_wall_up):
+            return True
 
-    def _get_coord_from_str(self, string):
-        movimientos = {
-            "u": (-1,  0),
-            "d": ( 1,  0),
-            "l": ( 0, -1),
-            "r": ( 1,  1),
-        }
-        return movimientos[string]
+        # Vertical
+        u_offset = 0
+        d_offset = 0
+        while True:
+            move_u_offset = 1 if grid[i - u_offset, j] != self.WALL else 0
+            move_d_offset = 1 if grid[i + d_offset, j] != self.WALL else 0
+            u_offset += move_u_offset
+            d_offset += move_d_offset
+            if move_u_offset == 0 and move_d_offset == 0:
+                break
+
+        all_wall_left  = all(grid[i-u_offset+1:i+d_offset , j-1] == self.WALL)
+        all_wall_right = all(grid[i-u_offset+1:i+d_offset , j+1] == self.WALL)
+        goal_in_row = any([(g[1] == j) and (i-u_offset+1 <= g[0] <= i+d_offset) for g in self.goals])
+
+        if (not goal_in_row and all_wall_left) or (not goal_in_row and all_wall_right):
+            return True
+
+        # En caso de que no sea deadlock
+        return False
