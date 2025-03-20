@@ -44,8 +44,6 @@ basic_grid = """
 juego = Sokoban()
 juego.parse_grid(basic_grid)
 
-solucion = []  # Almacena los movimientos de la solución
-indice_movimiento = 0  # Controla el paso a paso
 
 # Función para dibujar el escenario
 def dibujar_escenario():
@@ -75,6 +73,19 @@ def dibujar_escenario():
     texto_dfs = fuente.render("Resolver DFS", True, COLOR_BOTON_TEXTO)
     pantalla.blit(texto_dfs, (160, 15))
     
+    # Dibujar botón de Greedy
+    boton_greedy = pygame.Rect(290, 10, 120, 30)
+    pygame.draw.rect(pantalla, COLOR_BOTON, boton_greedy)
+    texto_greedy = fuente.render("Resolver Greedy", True, COLOR_BOTON_TEXTO)
+    pantalla.blit(texto_greedy, (300, 15))
+    
+    # Dibujar botón de A*
+    boton_a_star = pygame.Rect(430, 10, 120, 30)
+    pygame.draw.rect(pantalla, COLOR_BOTON, boton_a_star)
+    texto_a_star = fuente.render("Resolver A-star", True, COLOR_BOTON_TEXTO)
+    pantalla.blit(texto_a_star, (440, 15))
+    
+
     # Verificación de victoria
     if juego.is_finished():
         texto_victoria = fuente_grande.render("¡Nivel completado!", True, COLOR_VICTORIA)
@@ -84,13 +95,14 @@ def dibujar_escenario():
         texto_derrota = fuente_grande.render("El juego se ha trabado", True, COLOR_DERROTA)
         pantalla.blit(texto_derrota, (ANCHO // 4, ALTO // 2))
 
-    return boton_bfs, boton_dfs
+    return boton_bfs, boton_dfs, boton_greedy, boton_a_star
 
 # Ciclo principal
+solucion = ""
 corriendo = True
 while corriendo:
     pantalla.fill(COLOR_FONDO)
-    boton_bfs, boton_dfs = dibujar_escenario()
+    boton_bfs, boton_dfs, boton_greedy, boton_a_star = dibujar_escenario()
     
     for evento in pygame.event.get():
         if evento.type == pygame.QUIT:
@@ -117,6 +129,12 @@ while corriendo:
             elif boton_dfs.collidepoint(evento.pos):
                 solucion = dfs(juego).movements
                 
+            elif boton_greedy.collidepoint(evento.pos):
+                #solucion = greedy(juego).movements
+                pass
+            elif boton_a_star.collidepoint(evento.pos):
+                #solucion = a_star(juego).movements
+                pass
             if not solucion:
                 print("Juego Terminado")
                 
@@ -134,13 +152,9 @@ while corriendo:
             nuevo_estado = juego.move_up()
         elif movimiento == 'd':
             nuevo_estado = juego.move_down()
-        indice_movimiento += 1
-        pygame.time.delay(300)  # Pausa entre movimientos
 
-        if nuevo_estado:
-            juego = nuevo_estado
-        else:
-            juego = juego
-            
+        pygame.time.delay(300)  # Pausa entre movimientos
+        juego = nuevo_estado if nuevo_estado else juego
+
     pygame.display.flip()
     pygame.time.Clock().tick(60)
