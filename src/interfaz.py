@@ -130,19 +130,20 @@ while corriendo:
         elif evento.type == pygame.MOUSEBUTTONDOWN:
             if boton_bfs.collidepoint(evento.pos):
                 config.algoritmo = "bfs"
-                solucion = recorre_arbol(juego, config).movements
+                solucion = recorre_arbol(juego, config)["movimientos"]
                 
+
             elif boton_dfs.collidepoint(evento.pos):
                 config.algoritmo = "dfs"
-                solucion = recorre_arbol(juego, config).movements
+                solucion = recorre_arbol(juego, config)["movimientos"]
                 
             elif boton_greedy.collidepoint(evento.pos):
                 config.algoritmo = "greedy"
-                solucion = recorre_arbol(juego, config).movements
+                solucion = recorre_arbol(juego, config)["movimientos"]
                 
             elif boton_a_star.collidepoint(evento.pos):
                 config.algoritmo = "a_star"
-                solucion = recorre_arbol(juego, config).movements
+                solucion = recorre_arbol(juego, config)["movimientos"]
                 
 
             if not solucion:

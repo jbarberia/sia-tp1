@@ -1,3 +1,5 @@
+import time
+
 def equal_nodes(state_1, state_2):
     return (state_1.grid == state_2.grid).all()
 
@@ -14,10 +16,15 @@ def recorre_arbol(root, config):
     Returns:
         Sokoban: estado final del juego.
     """
+
+    # Estadisticas del algoritmo
+    t_inicial = time.time()
+    max_nivel_alcanzado = 0
+    
+    # inicio del algoritmo
     root.movements = ""
     frontera = [root]
     nodos_explorados = []
-
     while frontera:
 
         # Elige el nodo a visitar
@@ -32,21 +39,30 @@ def recorre_arbol(root, config):
             current = frontera.pop(0)  # Visita el nodo con menor heuristica
 
         elif config.algoritmo == "a_star":
-            frontera.sort(key= lambda s: s.get_actual_cost() + s.get_heuristic(config.heuristicas))
+            frontera.sort(key= lambda s: (
+                s.get_actual_cost() + s.get_heuristic(config.heuristicas), # 1 nivel de ordenamiento
+                s.get_heuristic(config.heuristicas),                       # 2 nivel de ordenamiento
+            ))
             current = frontera.pop(0)  # Visita el nodo con menor costo
 
         else:
             raise ValueError("Algoritmo Invalido")
 
 
+        if config.verbose: print("Nodo {}".format(len(nodos_explorados)), end="\t")
+        if config.verbose: print("Mov. {}".format(len(current.movements)), end="\t")
+        if config.verbose: print(current.movements)
+        
+        
         if current.is_finished():
-            print("Found solution")
+            if config.verbose: print("Solucion Encontrada")
             break
 
         # inserta el nodo en los nodos ya visitados
         nodos_explorados.append(current)
-        print("explorando nivel {}\tmovimiento:{}".format(len(current.movements), current.movements))
+        max_nivel_alcanzado = max(max_nivel_alcanzado, len(current.movements))
 
+        
         # expande el nodo y suma a la lista los estados no prohibidos
         for move in current.get_possible_moves():
             new_state = move()
@@ -58,4 +74,13 @@ def recorre_arbol(root, config):
             
             frontera.append(new_state)
                 
-    return current
+    t_final = time.time()
+
+    results = {
+        "tiempo": t_final - t_inicial,
+        "nodos_explorados": nodos_explorados,        
+        "solucion": current,
+        "movimientos": current.movements
+    }
+
+    return results
