@@ -258,3 +258,39 @@ class Sokoban:
 
         # En caso de que no sea deadlock
         return False
+
+
+    def get_actual_cost(self):
+        """
+        Devuelve la cantidad de pasos para llegar a ese estado
+
+        Returns:
+            int: costo del nodo actual
+
+        """
+        return len(self.movements)
+    
+
+    def get_heuristic(self):
+        """devuelve la heuristica del nodo (costo estimado a la solucion)
+
+        Returns:
+            int: posible costo hasta alcanzar la solucion
+        """
+        # TODO cuando armemos un config file aca se selecciona la heuristica a usar
+        manhattan_d = self._heuristica_mahattan()
+
+        return manhattan_d
+    
+
+    def _heuristica_mahattan(self):
+        """Distancia Manhattan para llevar todas las cajas a un goal.
+
+        Heuristica 1 de la consigna
+
+        Returns:
+            float: suma de la distancia o norma 0 entre caja y goal más proximo
+        """
+        goals = np.array(self.goals)
+        boxes = np.array(self.boxes)        
+        return sum([min([sum(abs(box - goal)) for goal in goals]) for box in boxes])

@@ -78,3 +78,41 @@ def dfs(root):
             queue.append(new_state)
             
     return current
+
+
+def a_star(root):
+    """Recorrido del arbol de posibles estados del Sokoban a traves de
+    A-star. Busqueda en el arbol primero hacía abajo ordenando los nodos más 
+    prometedores en función de su costo actual + heurisitica.
+
+    Args:
+        root (Sokoban): estado inicial del juego.
+
+    Returns:
+        Sokoban: estado final del juego.
+    """
+    root.movements = ""
+    queue = [root]
+    visited_nodes = []
+    while queue:
+
+        queue.sort(key= lambda s: s.get_actual_cost() + s.get_heuristic())
+        current = queue.pop(0)  # Visita el nodo con menor costo
+        visited_nodes.append(current)
+        print("explorando nivel {}\tmovimiento:{}".format(len(current.movements), current.movements))
+        if current.is_finished():
+            print("Found solution")
+            break
+
+        for move in current.get_possible_moves():
+            new_state = move()
+            
+            if not new_state: continue
+            if new_state.is_deadlocked(): continue
+                
+            was_visited = any([equal_nodes(new_state, prev_state) for prev_state in visited_nodes])
+            if was_visited: continue
+            
+            queue.append(new_state)
+            
+    return current
