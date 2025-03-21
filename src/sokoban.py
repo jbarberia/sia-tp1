@@ -271,19 +271,28 @@ class Sokoban:
         return len(self.movements)
     
 
-    def get_heuristic(self):
-        """devuelve la heuristica del nodo (costo estimado a la solucion)
+    def get_heuristic(self, heuristics_names):
+        """Devuelve la combinacion de heuristicas del nodo (costo estimado a la solucion)
+        
+        Args:
+            heuristics_names (_type_): listado de heuriticas a usar
 
         Returns:
             int: posible costo hasta alcanzar la solucion
         """
-        # TODO cuando armemos un config file aca se selecciona la heuristica a usar
-        manhattan_d = self._heuristica_mahattan()
 
-        return manhattan_d
+        if not heuristics_names: # si no se pasa una heuristica retorna 0
+            return 0
+
+        valores_heuristica = []
+        for heuristica_name in heuristics_names:
+            heuristica = getattr(self, "heuristica_{}".format(heuristica_name))
+            valores_heuristica.append(heuristica())
+
+        return max(valores_heuristica)
     
 
-    def _heuristica_mahattan(self):
+    def heuristica_manhattan(self):
         """Distancia Manhattan para llevar todas las cajas a un goal.
 
         Heuristica 1 de la consigna

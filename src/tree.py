@@ -2,11 +2,9 @@ def equal_nodes(state_1, state_2):
     return (state_1.grid == state_2.grid).all()
 
 
-
-
-def bfs(root):
-    """Recorrido del arbol de posibles estados del Sokoban a traves de
-    Breadth First Search. Busqueda en el arbol primero hacía los costados.
+def recorre_arbol(root, config):
+    """Recorrido del arbol de posibles estados del Sokoban.
+    En funcion de la configuración se elige un algoritmo u otro.
 
     Solo devuelve una solución posible. No la óptima.
 
@@ -17,142 +15,47 @@ def bfs(root):
         Sokoban: estado final del juego.
     """
     root.movements = ""
-    queue = [root]
-    visited_nodes = []
+    frontera = [root]
+    nodos_explorados = []
 
-    while queue:
-        current = queue.pop(0)
-        visited_nodes.append(current)
-        print("explorando nivel {}\tmovimiento:{}".format(len(current.movements), current.movements))
+    while frontera:
+
+        # Elige el nodo a visitar
+        if config.algoritmo == "bfs":
+            current = frontera.pop(0)
+
+        elif config.algoritmo == "dfs":
+            current = frontera.pop()
+
+        elif config.algoritmo == "greedy":
+            frontera.sort(key= lambda s: s.get_heuristic(config.heuristicas))
+            current = frontera.pop(0)  # Visita el nodo con menor heuristica
+
+        elif config.algoritmo == "a_star":
+            frontera.sort(key= lambda s: s.get_actual_cost() + s.get_heuristic(config.heuristicas))
+            current = frontera.pop(0)  # Visita el nodo con menor costo
+
+        else:
+            raise ValueError("Algoritmo Invalido")
+
 
         if current.is_finished():
             print("Found solution")
             break
 
-        for move in current.get_possible_moves():
-            new_state = move()
-            
-            if not new_state: continue
-            if new_state.is_deadlocked(): continue
-                
-            was_visited = any([equal_nodes(new_state, prev_state) for prev_state in visited_nodes])
-            if was_visited: continue
-            
-            queue.append(new_state)
-                
-    return current
-
-
-def dfs(root):
-    """Recorrido del arbol de posibles estados del Sokoban a traves de
-    Depth First Search. Busqueda en el arbol primero hacía abajo.
-
-    Solo devuelve una solución posible. No la óptima.
-
-    Args:
-        root (Sokoban): estado inicial del juego.
-
-    Returns:
-        Sokoban: estado final del juego.
-    """
-    root.movements = ""
-    queue = [root]
-    visited_nodes = []
-    while queue:
-        current = queue.pop()  # En DFS se toma el primer elemento que entro
-        visited_nodes.append(current)
+        # inserta el nodo en los nodos ya visitados
+        nodos_explorados.append(current)
         print("explorando nivel {}\tmovimiento:{}".format(len(current.movements), current.movements))
-        if current.is_finished():
-            print("Found solution")
-            break
 
+        # expande el nodo y suma a la lista los estados no prohibidos
         for move in current.get_possible_moves():
             new_state = move()
-            
+
             if not new_state: continue
             if new_state.is_deadlocked(): continue
-                
-            was_visited = any([equal_nodes(new_state, prev_state) for prev_state in visited_nodes])
+            was_visited = any([equal_nodes(new_state, prev_state) for prev_state in nodos_explorados])
             if was_visited: continue
             
-            queue.append(new_state)
-            
-    return current
-
-
-def greedy(root):
-    """Recorrido del arbol de posibles estados del Sokoban a traves de
-    Greedy. Busqueda en el arbol primero hacía abajo ordenando los nodos más 
-    prometedores en función de su heurisitica (cuanto falta para terminar).
-
-    Args:
-        root (Sokoban): estado inicial del juego.
-
-    Returns:
-        Sokoban: estado final del juego.
-    """
-    root.movements = ""
-    queue = [root]
-    visited_nodes = []
-    while queue:
-
-        queue.sort(key= lambda s: s.get_heuristic())
-        current = queue.pop(0)  # Visita el nodo con menor heuristica
-        visited_nodes.append(current)
-        print("explorando nivel {}\tmovimiento:{}".format(len(current.movements), current.movements))
-        if current.is_finished():
-            print("Found solution")
-            break
-
-        for move in current.get_possible_moves():
-            new_state = move()
-            
-            if not new_state: continue
-            if new_state.is_deadlocked(): continue
+            frontera.append(new_state)
                 
-            was_visited = any([equal_nodes(new_state, prev_state) for prev_state in visited_nodes])
-            if was_visited: continue
-            
-            queue.append(new_state)
-            
-    return current
-
-
-
-
-def a_star(root):
-    """Recorrido del arbol de posibles estados del Sokoban a traves de
-    A-star. Busqueda en el arbol primero hacía abajo ordenando los nodos más 
-    prometedores en función de su costo actual + heurisitica.
-
-    Args:
-        root (Sokoban): estado inicial del juego.
-
-    Returns:
-        Sokoban: estado final del juego.
-    """
-    root.movements = ""
-    queue = [root]
-    visited_nodes = []
-    while queue:
-
-        queue.sort(key= lambda s: s.get_actual_cost() + s.get_heuristic())
-        current = queue.pop(0)  # Visita el nodo con menor costo
-        visited_nodes.append(current)
-        print("explorando nivel {}\tmovimiento:{}".format(len(current.movements), current.movements))
-        if current.is_finished():
-            print("Found solution")
-            break
-
-        for move in current.get_possible_moves():
-            new_state = move()
-            
-            if not new_state: continue
-            if new_state.is_deadlocked(): continue
-                
-            was_visited = any([equal_nodes(new_state, prev_state) for prev_state in visited_nodes])
-            if was_visited: continue
-            
-            queue.append(new_state)
-            
     return current

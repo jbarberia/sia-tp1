@@ -1,6 +1,23 @@
+"""
+Para correr esta interfaz, pasar como argumento la configuracion necesaria
+que a modo de ejemplo se muestra en la carpeta config/
+
+python src/interfaz.py config.py
+
+"""
+
+
 import pygame
+import os
+import sys
 from sokoban import Sokoban
-from tree import bfs, dfs, greedy, a_star
+from tree import recorre_arbol
+
+# Archivo de configuracion como python
+# Solo le da importancia al mapa
+configfile = sys.argv[1]
+sys.path.insert(0, os.path.dirname(configfile))
+config = __import__(os.path.basename(configfile).replace(".py", ""))
 
 # Inicialización de pygame
 pygame.init()
@@ -29,20 +46,9 @@ COLOR_BOTON_TEXTO = (255, 255, 255)
 # Tamaño de bloque
 TAM_BLOQUE = 40
 
-# Escenario en formato del archivo original
-basic_grid = """
-########
-#      #
-# .**$@#
-#      #
-#####  #
-    ####
-"""
-# http://www.game-sokoban.com/index.php?mode=level&lid=928
-
 # Crear objeto Sokoban y cargar el nivel
 juego = Sokoban()
-juego.parse_grid(basic_grid)
+juego.parse_grid(config.mapa)
 
 
 # Función para dibujar el escenario
@@ -85,7 +91,6 @@ def dibujar_escenario():
     texto_a_star = fuente.render("Resolver A-star", True, COLOR_BOTON_TEXTO)
     pantalla.blit(texto_a_star, (440, 15))
     
-
     # Verificación de victoria
     if juego.is_finished():
         texto_victoria = fuente_grande.render("¡Nivel completado!", True, COLOR_VICTORIA)
@@ -124,16 +129,21 @@ while corriendo:
             
         elif evento.type == pygame.MOUSEBUTTONDOWN:
             if boton_bfs.collidepoint(evento.pos):
-                solucion = bfs(juego).movements
+                config.algoritmo = "bfs"
+                solucion = recorre_arbol(juego, config).movements
                 
             elif boton_dfs.collidepoint(evento.pos):
-                solucion = dfs(juego).movements
+                config.algoritmo = "dfs"
+                solucion = recorre_arbol(juego, config).movements
                 
             elif boton_greedy.collidepoint(evento.pos):
-                solucion = greedy(juego).movements
-
+                config.algoritmo = "greedy"
+                solucion = recorre_arbol(juego, config).movements
+                
             elif boton_a_star.collidepoint(evento.pos):
-                solucion = a_star(juego).movements                
+                config.algoritmo = "a_star"
+                solucion = recorre_arbol(juego, config).movements
+                
 
             if not solucion:
                 print("Juego Terminado")
