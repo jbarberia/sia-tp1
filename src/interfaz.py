@@ -1,6 +1,6 @@
 import pygame
 from sokoban import Sokoban
-from tree import bfs, dfs, a_star
+from tree import bfs, dfs, greedy, a_star
 
 # Inicialización de pygame
 pygame.init()
@@ -130,10 +130,11 @@ while corriendo:
                 solucion = dfs(juego).movements
                 
             elif boton_greedy.collidepoint(evento.pos):
-                #solucion = greedy(juego).movements
-                pass
+                solucion = greedy(juego).movements
+
             elif boton_a_star.collidepoint(evento.pos):
                 solucion = a_star(juego).movements                
+
             if not solucion:
                 print("Juego Terminado")
                 
