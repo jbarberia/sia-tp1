@@ -14,6 +14,10 @@ El proyecto se centra en la resolución de tableros del juego Sokoban utilizando
 - `test/`: Pruebas y casos de prueba para las implementaciones.
 - `algoritmos_de_busqueda.ipynb`: Cuaderno de Jupyter que contiene ejemplos y análisis de los algoritmos de búsqueda implementados.
 
+## Presentación
+> ⚠️ Tienen acceso como editor al [Link a la presentación](https://docs.google.com/presentation/d/1waLDKe33UqgkzqL2cKOTyAEzE2uUm4ZlU1D-ub639Ks/edit?usp=sharing)
+
+
 ## Algoritmos Implementados
 
 Se han implementado los siguientes algoritmos de búsqueda:
