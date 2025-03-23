@@ -115,7 +115,8 @@ while corriendo:
             exit()
         
         elif evento.type == pygame.KEYDOWN:
-        
+            nuevo_estado = None
+
             if evento.key == pygame.K_LEFT:
                 nuevo_estado = juego.move_left()
             elif evento.key == pygame.K_RIGHT:
