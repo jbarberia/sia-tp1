@@ -13,160 +13,125 @@ import sys
 from sokoban import Sokoban
 from tree import recorre_arbol
 
-# Archivo de configuracion como python
-# Solo le da importancia al mapa
-configfile = sys.argv[1]
-sys.path.insert(0, os.path.dirname(configfile))
-config = __import__(os.path.basename(configfile).replace(".py", ""))
 
-# Inicialización de pygame
-pygame.init()
-
-# Configuración de pantalla
-ANCHO, ALTO = 640, 480
-pantalla = pygame.display.set_mode((ANCHO, ALTO))
-pygame.display.set_caption('Sokoban con Solución Automática')
-
-# Fuente para leyenda
-fuente = pygame.font.SysFont("Arial", 16)
-fuente_grande = pygame.font.SysFont("Arial", 32)
-
-# Colores
-COLOR_FONDO = (30, 30, 30)
-COLOR_CAJA = (160, 82, 45)
-COLOR_OBJETIVO = (200, 180, 0)
-COLOR_JUGADOR = (0, 100, 255)
-COLOR_PARED = (80, 80, 80)
-COLOR_TEXTO = (255, 255, 255)
-COLOR_VICTORIA = (0, 255, 0)
-COLOR_DERROTA = (255, 255, 0)
-COLOR_BOTON = (100, 100, 255)
-COLOR_BOTON_TEXTO = (255, 255, 255)
-
-# Tamaño de bloque
-TAM_BLOQUE = 40
-
-# Crear objeto Sokoban y cargar el nivel
-juego = Sokoban()
-juego.parse_grid(config.mapa)
+def cargar_configuracion():
+    """Carga el archivo de configuración desde los argumentos."""
+    if len(sys.argv) < 2:
+        print("Uso: python src/interfaz.py config.py")
+        sys.exit(1)
+    configfile = sys.argv[1]
+    sys.path.insert(0, os.path.dirname(configfile))
+    config = __import__(os.path.basename(configfile).replace(".py", ""))
+    return config
 
 
-# Función para dibujar el escenario
-def dibujar_escenario():
-    pantalla.fill(COLOR_FONDO)
-    filas, columnas = juego.grid.shape
-    for y in range(filas):
-        for x in range(columnas):
-            rect = pygame.Rect(x*TAM_BLOQUE, y*TAM_BLOQUE, TAM_BLOQUE, TAM_BLOQUE)
-            if juego.grid[y, x] == juego.WALL:
-                pygame.draw.rect(pantalla, COLOR_PARED, rect)
+def inicializar_pygame():
+    """Inicializa pygame y configura la pantalla."""
+    pygame.init()
+    pantalla = pygame.display.set_mode((640, 480))
+    pygame.display.set_caption('Sokoban con Solución Automática')
+    return pantalla
+
+
+def definir_colores():
+    """Define y devuelve los colores utilizados en la interfaz."""
+    return {
+        "fondo": (30, 30, 30), "pared": (80, 80, 80), "jugador": (0, 100, 255),
+        "caja": (160, 82, 45), "objetivo": (200, 180, 0), "texto": (255, 255, 255),
+        "victoria": (0, 255, 0), "derrota": (255, 255, 0), "boton": (100, 100, 255),
+        "boton_texto": (255, 255, 255)
+    }
+
+
+def crear_botones(fuente):
+    """Crea y devuelve los botones de la interfaz."""
+    botones = {}
+    nombres = ["BFS", "DFS", "Greedy", "A*"]
+    posiciones = [10, 150, 290, 430]
+    for i, nombre in enumerate(nombres):
+        boton = pygame.Rect(posiciones[i], 10, 120, 30)
+        texto = fuente.render(f"Resolver {nombre}", True, (255, 255, 255))
+        botones[nombre.lower()] = (boton, texto)
+    return botones
+
+
+def dibujar_escenario(pantalla, juego, colores, botones, fuente):
+    """Dibuja el escenario y los elementos del juego."""
+    pantalla.fill(colores["fondo"])
+    for y, fila in enumerate(juego.grid):
+        for x, celda in enumerate(fila):
+            rect = pygame.Rect(x*40, y*40, 40, 40)
+            if celda == juego.WALL:
+                pygame.draw.rect(pantalla, colores["pared"], rect)
             elif (y, x) == juego.player:
-                pygame.draw.rect(pantalla, COLOR_JUGADOR, rect)
+                pygame.draw.rect(pantalla, colores["jugador"], rect)
             elif (y, x) in juego.boxes:
-                pygame.draw.rect(pantalla, COLOR_CAJA, rect)
+                pygame.draw.rect(pantalla, colores["caja"], rect)
             elif (y, x) in juego.goals:
-                pygame.draw.rect(pantalla, COLOR_OBJETIVO, rect)
+                pygame.draw.rect(pantalla, colores["objetivo"], rect)
     
-    # Dibujar botón de BFS
-    boton_bfs = pygame.Rect(10, 10, 120, 30)
-    pygame.draw.rect(pantalla, COLOR_BOTON, boton_bfs)
-    texto_bfs = fuente.render("Resolver BFS", True, COLOR_BOTON_TEXTO)
-    pantalla.blit(texto_bfs, (20, 15))
+    for boton, texto in botones.values():
+        pygame.draw.rect(pantalla, colores["boton"], boton)
+        pantalla.blit(texto, (boton.x + 10, boton.y + 5))
     
-    # Dibujar botón de DFS
-    boton_dfs = pygame.Rect(150, 10, 120, 30)
-    pygame.draw.rect(pantalla, COLOR_BOTON, boton_dfs)
-    texto_dfs = fuente.render("Resolver DFS", True, COLOR_BOTON_TEXTO)
-    pantalla.blit(texto_dfs, (160, 15))
-    
-    # Dibujar botón de Greedy
-    boton_greedy = pygame.Rect(290, 10, 120, 30)
-    pygame.draw.rect(pantalla, COLOR_BOTON, boton_greedy)
-    texto_greedy = fuente.render("Resolver Greedy", True, COLOR_BOTON_TEXTO)
-    pantalla.blit(texto_greedy, (300, 15))
-    
-    # Dibujar botón de A*
-    boton_a_star = pygame.Rect(430, 10, 120, 30)
-    pygame.draw.rect(pantalla, COLOR_BOTON, boton_a_star)
-    texto_a_star = fuente.render("Resolver A-star", True, COLOR_BOTON_TEXTO)
-    pantalla.blit(texto_a_star, (440, 15))
-    
-    # Verificación de victoria
     if juego.is_finished():
-        texto_victoria = fuente_grande.render("¡Nivel completado!", True, COLOR_VICTORIA)
-        pantalla.blit(texto_victoria, (ANCHO // 4, ALTO // 2))
-
+        pantalla.blit(fuente.render("¡Nivel completado!", True, colores["victoria"]), (160, 240))
     if juego.is_deadlocked():
-        texto_derrota = fuente_grande.render("El juego se ha trabado", True, COLOR_DERROTA)
-        pantalla.blit(texto_derrota, (ANCHO // 4, ALTO // 2))
+        pantalla.blit(fuente.render("El juego se ha trabado", True, colores["derrota"]), (160, 240))
 
-    return boton_bfs, boton_dfs, boton_greedy, boton_a_star
 
-# Ciclo principal
-solucion = ""
-corriendo = True
-while corriendo:
-    pantalla.fill(COLOR_FONDO)
-    boton_bfs, boton_dfs, boton_greedy, boton_a_star = dibujar_escenario()
-    
+def procesar_eventos(pantalla, juego, colores, botones, fuente, config):
+    """Maneja eventos de entrada del usuario."""
     for evento in pygame.event.get():
         if evento.type == pygame.QUIT:
             pygame.quit()
-            exit()
-        
+            sys.exit()
+
         elif evento.type == pygame.KEYDOWN:
-            nuevo_estado = None
-
-            if evento.key == pygame.K_LEFT:
-                nuevo_estado = juego.move_left()
-            elif evento.key == pygame.K_RIGHT:
-                nuevo_estado = juego.move_right()
-            elif evento.key == pygame.K_UP:
-                nuevo_estado = juego.move_up()
-            elif evento.key == pygame.K_DOWN:
-                nuevo_estado = juego.move_down()
-            
-            juego = nuevo_estado if nuevo_estado else juego
-            
+            direcciones = {pygame.K_LEFT: juego.move_left, pygame.K_RIGHT: juego.move_right,
+                           pygame.K_UP: juego.move_up, pygame.K_DOWN: juego.move_down}
+            if evento.key in direcciones:
+                return direcciones[evento.key]() or juego
+        
         elif evento.type == pygame.MOUSEBUTTONDOWN:
-            if boton_bfs.collidepoint(evento.pos):
-                config.algoritmo = "bfs"
-                solucion = recorre_arbol(juego, config)["movimientos"]
-                
+            for nombre, (boton, _) in botones.items():
+                if boton.collidepoint(evento.pos):
+                    config.algoritmo = nombre
+                    solucion = recorre_arbol(juego, config)
 
-            elif boton_dfs.collidepoint(evento.pos):
-                config.algoritmo = "dfs"
-                solucion = recorre_arbol(juego, config)["movimientos"]
-                
-            elif boton_greedy.collidepoint(evento.pos):
-                config.algoritmo = "greedy"
-                solucion = recorre_arbol(juego, config)["movimientos"]
-                
-            elif boton_a_star.collidepoint(evento.pos):
-                config.algoritmo = "a_star"
-                solucion = recorre_arbol(juego, config)["movimientos"]
-                
+                    movimientos = {
+                        "u": lambda x: x.move_up(),
+                        "d": lambda x: x.move_down(),
+                        "r": lambda x: x.move_right(),
+                        "l": lambda x: x.move_left(),
+                    }
 
-            if not solucion:
-                print("Juego Terminado")
-                
+                    for direccion in solucion["movimientos"]:
+                        juego = movimientos[direccion](juego)                        
+                        dibujar_escenario(pantalla, juego, colores, botones, fuente)
+                        pygame.display.flip()
+                        pygame.time.delay(300)
+    return juego
+
+
+
+def main():
+    config = cargar_configuracion()
+    pantalla = inicializar_pygame()
+    colores = definir_colores()
+    fuente = pygame.font.SysFont("Arial", 16)
+    botones = crear_botones(fuente)   
+    juego = Sokoban()
+    juego.parse_grid(config.mapa)
     
-    # Ejecutar la solución paso a paso
-    if solucion:
-        movimiento = solucion[0]
-        solucion = solucion[1:]
+    while True:
+        pantalla.fill(colores["fondo"])
+        dibujar_escenario(pantalla, juego, colores, botones, fuente)
+        
+        pygame.display.flip()
+        juego = procesar_eventos(pantalla, juego, colores, botones, fuente, config)
 
-        if movimiento == 'l':
-            nuevo_estado = juego.move_left()
-        elif movimiento == 'r':
-            nuevo_estado = juego.move_right()
-        elif movimiento == 'u':
-            nuevo_estado = juego.move_up()
-        elif movimiento == 'd':
-            nuevo_estado = juego.move_down()
 
-        pygame.time.delay(300)  # Pausa entre movimientos
-        juego = nuevo_estado if nuevo_estado else juego
 
-    pygame.display.flip()
-    pygame.time.Clock().tick(60)
+if __name__ == "__main__":
+    main()
