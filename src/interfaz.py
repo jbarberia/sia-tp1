@@ -1,137 +1,154 @@
-"""
-Para correr esta interfaz, pasar como argumento la configuracion necesaria
-que a modo de ejemplo se muestra en la carpeta config/
-
-python src/interfaz.py config.py
-
-"""
-
-
 import pygame
 import os
 import sys
+import time
+import tkinter as tk
+from tkinter import filedialog, messagebox
+import matplotlib.pyplot as plt
 from sokoban import Sokoban
 from tree import recorre_arbol
 
-
-def cargar_configuracion():
-    """Carga el archivo de configuración desde los argumentos."""
-    if len(sys.argv) < 2:
-        print("Uso: python src/interfaz.py config.py")
-        sys.exit(1)
-    configfile = sys.argv[1]
-    sys.path.insert(0, os.path.dirname(configfile))
-    config = __import__(os.path.basename(configfile).replace(".py", ""))
-    return config
-
-
-def inicializar_pygame():
-    """Inicializa pygame y configura la pantalla."""
-    pygame.init()
-    pantalla = pygame.display.set_mode((640, 480))
-    pygame.display.set_caption('Sokoban con Solución Automática')
-    return pantalla
-
-
-def definir_colores():
-    """Define y devuelve los colores utilizados en la interfaz."""
-    return {
-        "fondo": (30, 30, 30), "pared": (80, 80, 80), "jugador": (0, 100, 255),
-        "caja": (160, 82, 45), "objetivo": (200, 180, 0), "texto": (255, 255, 255),
-        "victoria": (0, 255, 0), "derrota": (255, 255, 0), "boton": (100, 100, 255),
-        "boton_texto": (255, 255, 255)
-    }
-
-
-def crear_botones(fuente):
-    """Crea y devuelve los botones de la interfaz."""
-    botones = {}
-    nombres = ["BFS", "DFS", "Greedy", "A*"]
-    posiciones = [10, 150, 290, 430]
-    for i, nombre in enumerate(nombres):
-        boton = pygame.Rect(posiciones[i], 10, 120, 30)
-        texto = fuente.render(f"Resolver {nombre}", True, (255, 255, 255))
-        botones[nombre.lower()] = (boton, texto)
-    return botones
-
-
-def dibujar_escenario(pantalla, juego, colores, botones, fuente):
-    """Dibuja el escenario y los elementos del juego."""
-    pantalla.fill(colores["fondo"])
-    for y, fila in enumerate(juego.grid):
-        for x, celda in enumerate(fila):
-            rect = pygame.Rect(x*40, y*40, 40, 40)
-            if celda == juego.WALL:
-                pygame.draw.rect(pantalla, colores["pared"], rect)
-            elif (y, x) == juego.player:
-                pygame.draw.rect(pantalla, colores["jugador"], rect)
-            elif (y, x) in juego.boxes:
-                pygame.draw.rect(pantalla, colores["caja"], rect)
-            elif (y, x) in juego.goals:
-                pygame.draw.rect(pantalla, colores["objetivo"], rect)
-    
-    for boton, texto in botones.values():
-        pygame.draw.rect(pantalla, colores["boton"], boton)
-        pantalla.blit(texto, (boton.x + 10, boton.y + 5))
-    
-    if juego.is_finished():
-        pantalla.blit(fuente.render("¡Nivel completado!", True, colores["victoria"]), (160, 240))
-    if juego.is_deadlocked():
-        pantalla.blit(fuente.render("El juego se ha trabado", True, colores["derrota"]), (160, 240))
-
-
-def procesar_eventos(pantalla, juego, colores, botones, fuente, config):
-    """Maneja eventos de entrada del usuario."""
-    for evento in pygame.event.get():
-        if evento.type == pygame.QUIT:
-            pygame.quit()
-            sys.exit()
-
-        elif evento.type == pygame.KEYDOWN:
-            direcciones = {pygame.K_LEFT: juego.move_left, pygame.K_RIGHT: juego.move_right,
-                           pygame.K_UP: juego.move_up, pygame.K_DOWN: juego.move_down}
-            if evento.key in direcciones:
-                return direcciones[evento.key]() or juego
+class SokobanUI:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Sokoban Solver UI")
         
-        elif evento.type == pygame.MOUSEBUTTONDOWN:
-            for nombre, (boton, _) in botones.items():
-                if boton.collidepoint(evento.pos):
-                    config.algoritmo = nombre
-                    solucion = recorre_arbol(juego, config)
-
-                    movimientos = {
-                        "u": lambda x: x.move_up(),
-                        "d": lambda x: x.move_down(),
-                        "r": lambda x: x.move_right(),
-                        "l": lambda x: x.move_left(),
-                    }
-
-                    for direccion in solucion["movimientos"]:
-                        juego = movimientos[direccion](juego)                        
-                        dibujar_escenario(pantalla, juego, colores, botones, fuente)
-                        pygame.display.flip()
-                        pygame.time.delay(300)
-    return juego
-
-
-
-def main():
-    config = cargar_configuracion()
-    pantalla = inicializar_pygame()
-    colores = definir_colores()
-    fuente = pygame.font.SysFont("Arial", 16)
-    botones = crear_botones(fuente)   
-    juego = Sokoban()
-    juego.parse_grid(config.mapa)
-    
-    while True:
-        pantalla.fill(colores["fondo"])
-        dibujar_escenario(pantalla, juego, colores, botones, fuente)
+        self.menu_bar = tk.Menu(root)
+        self.root.config(menu=self.menu_bar)
         
+        self.file_menu = tk.Menu(self.menu_bar, tearoff=0)
+        self.file_menu.add_command(label="Cargar Config", command=self.cargar_nueva_config)
+        self.file_menu.add_command(label="Reiniciar", command=self.reiniciar_juego)
+        self.file_menu.add_separator()
+        self.file_menu.add_command(label="Salir", command=root.quit)
+        self.menu_bar.add_cascade(label="Archivo", menu=self.file_menu)
+        
+        self.algorithm_menu = tk.Menu(self.menu_bar, tearoff=0)
+        self.algorithm_menu.add_command(label="BFS", command=lambda: self.ejecutar_algoritmo("bfs"))
+        self.algorithm_menu.add_command(label="DFS", command=lambda: self.ejecutar_algoritmo("dfs"))
+        self.algorithm_menu.add_command(label="Greedy", command=lambda: self.ejecutar_algoritmo("greedy"))
+        self.algorithm_menu.add_command(label="A*", command=lambda: self.ejecutar_algoritmo("a_star"))
+        self.menu_bar.add_cascade(label="Algoritmos", menu=self.algorithm_menu)
+
+        self.resultados_menu = tk.Menu(self.menu_bar, tearoff=0)
+        self.resultados_menu.add_command(label="Mostrar resultados", command=lambda: self.mostrar_resultados(), state="disabled")
+        self.menu_bar.add_cascade(label="Resultados", menu=self.resultados_menu)
+
+        self.embed_pygame = tk.Frame(root, width=640, height=480)
+        self.embed_pygame.pack()
+        self.root.bind("<KeyPress>", self.procesar_tecla)
+        
+        self.config = self.cargar_configuracion()
+        os.environ['SDL_WINDOWID'] = str(self.embed_pygame.winfo_id())
+        os.environ['SDL_VIDEODRIVER'] = 'windib'
+        
+        self.pantalla = self.inicializar_pygame()
+        self.colores = self.definir_colores()
+        self.fuente = pygame.font.SysFont("Arial", 16)
+        self.juego = Sokoban()
+        self.juego.parse_grid(self.config.mapa)
+        self.solucion = ""
+        
+        self.actualizar_pantalla()
+    
+    def cargar_configuracion(self, configfile=None):
+        if configfile is None:
+            configfile = os.path.join(os.path.dirname(__file__), "default_config.py")
+        sys.path.insert(0, os.path.dirname(configfile))
+        return __import__(os.path.basename(configfile).replace(".py", ""))
+    
+    def inicializar_pygame(self):
+        pygame.init()
+        return pygame.display.set_mode((640, 480))
+    
+    def definir_colores(self):
+        return {"fondo": (30, 30, 30), "pared": (80, 80, 80), "jugador": (0, 100, 255),
+                "caja": (160, 82, 45), "objetivo": (200, 180, 0), "texto": (255, 255, 255),
+                "victoria": (0, 255, 0), "derrota": (255, 255, 0)}
+    
+    def actualizar_pantalla(self):
+        self.pantalla.fill(self.colores["fondo"])
+        for y, fila in enumerate(self.juego.grid):
+            for x, celda in enumerate(fila):
+                rect = pygame.Rect(x*40, y*40, 40, 40)
+                if celda == self.juego.WALL:
+                    pygame.draw.rect(self.pantalla, self.colores["pared"], rect)
+                elif (y, x) == self.juego.player:
+                    pygame.draw.rect(self.pantalla, self.colores["jugador"], rect)
+                elif (y, x) in self.juego.boxes:
+                    pygame.draw.rect(self.pantalla, self.colores["caja"], rect)
+                elif (y, x) in self.juego.goals:
+                    pygame.draw.rect(self.pantalla, self.colores["objetivo"], rect)
+        
+        if self.juego.is_finished():
+            self.pantalla.blit(self.fuente.render("¡Nivel completado!", True, self.colores["victoria"]), (160, 240))
+        
+        if self.juego.is_deadlocked():
+            self.pantalla.blit(self.fuente.render("¡Juego Bloqueado!", True, self.colores["derrota"]), (160, 240))
+
         pygame.display.flip()
-        juego = procesar_eventos(pantalla, juego, colores, botones, fuente, config)
+        self.root.after(200, self.actualizar_pantalla)
 
 
+    def procesar_tecla(self, event):
+        """Procesa el evento de teclado y mueve el jugador."""
+        direcciones = {
+            "Up": self.juego.move_up,
+            "Down": self.juego.move_down,
+            "Left": self.juego.move_left,
+            "Right": self.juego.move_right
+        }
+        if event.keysym in direcciones:
+            juego = direcciones[event.keysym]()
+            self.juego = juego if juego else self.juego
+            self.actualizar_pantalla()
+            
+    
+    def ejecutar_algoritmo(self, algoritmo):
+        "Ejecuta el algoritmo seleccionado y luego dispara las teclas para la solución."
+        self.config.algoritmo = algoritmo
+        self.solucion = recorre_arbol(self.juego, self.config)
 
+        evento = {
+            "r": "<KeyPress-Right>",
+            "l": "<KeyPress-Left>",
+            "d": "<KeyPress-Down>",
+            "u": "<KeyPress-Up>",
+        }
+        for direccion in self.solucion["movimientos"]:   
+            self.root.event_generate(evento[direccion])
+            time.sleep(0.2)
+
+        # Activa botones para ver los resultados
+        self.resultados_menu.entryconfig("Mostrar resultados", state="normal")
+        
+
+
+    def mostrar_resultados(self):
+        solucion = self.solucion
+        mensaje = ""
+        mensaje += "Algoritmo usado:\t\t\t{}\n".format(self.config.algoritmo)
+        mensaje += "Nodos recorridos:\t\t\t{}\n".format(len(solucion["nodos_explorados"]))
+        mensaje += "Profundidad máxima alcanzada:\t{}\n".format(max(len(x.movements) for x in solucion["nodos_explorados"]))
+        mensaje += "Nro. de movimientos:\t\t{}\n".format(len(solucion["movimientos"]))
+        mensaje += "Movimientos:\t{}\n".format(solucion["movimientos"])
+        messagebox.showinfo("Resultado", mensaje)
+
+
+    def cargar_nueva_config(self):
+        archivo = filedialog.askopenfilename(filetypes=[("Archivos Python", "*.py")])
+        if archivo:
+            self.config = self.cargar_configuracion(archivo)
+            self.reiniciar_juego()
+    
+    def reiniciar_juego(self):
+        self.juego = Sokoban()
+        self.juego.parse_grid(self.config.mapa)
+        self.solucion = ""
+
+        self.resultados_menu.entryconfig("Mostrar resultados", state="disabled")
+    
 if __name__ == "__main__":
-    main()
+    root = tk.Tk()
+    app = SokobanUI(root)
+    root.mainloop()
