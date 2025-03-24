@@ -28,10 +28,12 @@ class SokobanUI:
         self.algorithm_menu.add_command(label="DFS", command=lambda: self.ejecutar_algoritmo("dfs"))
         self.algorithm_menu.add_command(label="Greedy", command=lambda: self.ejecutar_algoritmo("greedy"))
         self.algorithm_menu.add_command(label="A*", command=lambda: self.ejecutar_algoritmo("a_star"))
+        self.algorithm_menu.add_separator()
+        self.algorithm_menu.add_command(label="Ejecutar todos", command=lambda: self.ejecutar_todos_algoritmos())
         self.menu_bar.add_cascade(label="Algoritmos", menu=self.algorithm_menu)
 
         self.resultados_menu = tk.Menu(self.menu_bar, tearoff=0)
-        self.resultados_menu.add_command(label="Mostrar resultados", command=lambda: self.mostrar_resultados(), state="disabled")
+        self.resultados_menu.add_command(label="Mostrar resultados", command=lambda: self.mostrar_resultados())
         self.menu_bar.add_cascade(label="Resultados", menu=self.resultados_menu)
 
         self.embed_pygame = tk.Frame(root, width=640, height=480)
@@ -48,6 +50,8 @@ class SokobanUI:
         self.juego = Sokoban()
         self.juego.parse_grid(self.config.mapa)
         self.solucion = ""
+
+        self.resultados = ""
         
         self.actualizar_pantalla()
     
@@ -119,20 +123,25 @@ class SokobanUI:
             self.root.event_generate(evento[direccion])
             time.sleep(0.2)
 
-        # Activa botones para ver los resultados
-        self.resultados_menu.entryconfig("Mostrar resultados", state="normal")
-        
-
-
-    def mostrar_resultados(self):
+        # Guarda resultados
         solucion = self.solucion
         mensaje = ""
-        mensaje += "Algoritmo usado:\t\t\t{}\n".format(self.config.algoritmo)
+        mensaje += "{}\n".format(self.config.algoritmo)
+        mensaje += "-"*40 + "\n"
         mensaje += "Nodos recorridos:\t\t\t{}\n".format(len(solucion["nodos_explorados"]))
         mensaje += "Profundidad máxima alcanzada:\t{}\n".format(max(len(x.movements) for x in solucion["nodos_explorados"]))
         mensaje += "Nro. de movimientos:\t\t{}\n".format(len(solucion["movimientos"]))
-        mensaje += "Movimientos:\t{}\n".format(solucion["movimientos"])
-        messagebox.showinfo("Resultado", mensaje)
+        mensaje += "Movimientos:\t{}\n\n".format(solucion["movimientos"])
+        
+        self.resultados += mensaje
+        
+    def ejecutar_todos_algoritmos(self):
+        for algoritmo in ["bfs", "dfs", "greedy", "a_star"]:
+            self.ejecutar_algoritmo(algoritmo)
+            self.reiniciar_juego()
+        
+    def mostrar_resultados(self):
+        messagebox.showinfo("Resultado", self.resultados)
 
 
     def cargar_nueva_config(self):
@@ -146,7 +155,7 @@ class SokobanUI:
         self.juego.parse_grid(self.config.mapa)
         self.solucion = ""
 
-        self.resultados_menu.entryconfig("Mostrar resultados", state="disabled")
+        
     
 if __name__ == "__main__":
     root = tk.Tk()
