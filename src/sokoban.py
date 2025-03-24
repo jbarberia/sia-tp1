@@ -306,14 +306,14 @@ class Sokoban:
 
 
     def heuristica_distancia_a_caja(self):
-        """Devuelve la maxima distancia del jugador a la caja fuera de lugar
+        """Devuelve la minima distancia del jugador a la caja fuera de lugar
 
         Heuristica 2 de la consigna
 
         Returns:
-            float: maxima distancia a una caja fuera del goal.
+            float: minima distancia a una caja fuera del goal.
         """
         boxes = np.array(self.boxes)
         player = np.array(self.player)
         goals = self.goals        
-        return max([sum(abs(box - player)) for box in boxes if box.tolist() not in goals])
+        return min([sum(abs(box - player)) for box in boxes if box.tolist() not in goals])
