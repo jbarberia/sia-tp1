@@ -31,7 +31,7 @@ Se han implementado los siguientes algoritmos de búsqueda:
 Para correr la demostración del TP usar el script de la interfaz gráfica creada en pygame.
 
 ```bash
-python src/interfaz.py config.py
+python src/interfaz.py
 ```
 
 ## Recursos Adicionales
