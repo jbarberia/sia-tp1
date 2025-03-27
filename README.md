@@ -9,7 +9,7 @@ El proyecto se centra en la resolución de tableros del juego Sokoban utilizando
 ## Estructura del Repositorio
 
 - `config/`: Archivos de configuración utilizados en el proyecto.
-- `docs/`: Consignas y respuestros asociadas al TP.
+- `docs/`: Consignas y respuestas asociadas al TP.
 - `src/`: Código fuente principal de las implementaciones.
 - `test/`: Pruebas y casos de prueba para las implementaciones.
 - `algoritmos_de_busqueda.ipynb`: Cuaderno de Jupyter que contiene ejemplos y análisis de los algoritmos de búsqueda implementados.
